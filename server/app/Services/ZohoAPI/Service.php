@@ -14,7 +14,6 @@ class Service
     protected string $refreshToken;
     protected string $accessToken;
 
-//    TODO подумати над зберіганням даних в БД
     public function __construct()
     {
         $this->baseUrl = config('services.zoho.base_url');
@@ -46,7 +45,6 @@ class Service
      */
     public function refreshToken(): void
     {
-
         $refreshToken = $this->refreshToken;
         $clientId = $this->clientId;
         $clientSecret = $this->clientSecret;
@@ -56,6 +54,8 @@ class Service
 
         if (isset($response['access_token'])) {
             $this->accessToken = $response['access_token'];
+
+            cache()->put('zoho_access_token', $this->accessToken, 3660);
         } else {
             throw new Exception('Не вдалося оновити токен: ' . json_encode($response));
         }
@@ -66,12 +66,12 @@ class Service
      */
     private function sendRequest(string $endpoint, array $data = [], bool $retry = true): array
     {
-        $headers = [];
-        $headers = array_merge([
+        $this->accessToken = cache('zoho_access_token') ?? $this->accessToken;
+
+        $headers = [
             'Content-Type' => 'application/json',
             'Authorization' => 'Zoho-oauthtoken ' . $this->accessToken,
-        ], $headers);
-
+        ];
         try {
             $response = Http::withoutVerifying()
                 ->withHeaders($headers)
