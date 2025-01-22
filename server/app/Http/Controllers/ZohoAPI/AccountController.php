@@ -23,11 +23,6 @@ class AccountController extends Controller
         try {
             $response = $this->service->createAccount($data);
 
-            if (isset($response['code']) && $response['code'] === 'INVALID_TOKEN') {
-                $this->service->refreshToken();
-                $response = $this->service->createAccount($data);
-            }
-
             return response()->json($response);
         } catch (\Exception $exception) {
             return response()->json(['error' => $exception->getMessage()], 500);

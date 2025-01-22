@@ -46,20 +46,16 @@ class Service
      */
     public function refreshToken(): void
     {
-        $data = [
-            'refresh_token' => $this->refreshToken,
-            'client_id' => $this->clientId,
-            'client_secret' => $this->clientSecret,
-            'grant_type' => 'refresh_token',
-        ];
+
+        $refreshToken = $this->refreshToken;
+        $clientId = $this->clientId;
+        $clientSecret = $this->clientSecret;
 
         $response = Http::withoutVerifying() // ахутенг SSL
-        ->post("$this->baseUrl/oauth/v2/token", ['data' => [$data]])->json();
+        ->post("$this->baseUrl/oauth/v2/token?refresh_token=$refreshToken&client_id=$clientId&client_secret=$clientSecret&grant_type=refresh_token")->json();
 
         if (isset($response['access_token'])) {
             $this->accessToken = $response['access_token'];
-            // TODO: не забути прибарти!
-            dd("Токен перевипустився :)");
         } else {
             throw new Exception('Не вдалося оновити токен: ' . json_encode($response));
         }
@@ -68,7 +64,7 @@ class Service
     /**
      * @throws Exception
      */
-    private function sendRequest(string $endpoint, array $data = []): array
+    private function sendRequest(string $endpoint, array $data = [], bool $retry = true): array
     {
         $headers = [];
         $headers = array_merge([
@@ -77,10 +73,16 @@ class Service
         ], $headers);
 
         try {
-            $response = Http::withoutVerifying() // ахутенг SSL
-            ->withHeaders($headers)
+            $response = Http::withoutVerifying()
+                ->withHeaders($headers)
                 ->post("$this->baseApiUrl/$endpoint", $data)
                 ->json();
+
+            if (isset($response['code']) && $response['code'] === 'INVALID_TOKEN' && $retry) {
+                $this->refreshToken();
+
+                return $this->sendRequest($endpoint, $data, false);
+            }
 
             if (isset($response['code']) && $response['code'] !== 'SUCCESS') {
                 throw new Exception('Помилка API Zoho: ' . json_encode($response));
