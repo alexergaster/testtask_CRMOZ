@@ -47,4 +47,8 @@ const toggleForm = () => {
   width: 100%;
   max-width: 900px;
 }
+::selection {
+  background-color: #111;
+  color: #fff;
+}
 </style>
