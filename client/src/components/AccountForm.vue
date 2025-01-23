@@ -2,57 +2,52 @@
   <form
     @submit.prevent="submitForm"
     class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md m-4"
+    :class="{
+      'bg-opacity-50 backdrop-blur-md pointer-events-none': isSubmitting,
+    }"
   >
     <h2 class="text-2xl font-semibold text-white mb-6 text-center">
       Створити акаунт
     </h2>
 
-    <div class="mb-4">
-      <label class="block text-gray-300">Ім'я акаунту</label>
-      <input
-        v-model="accountName"
-        type="text"
-        class="mt-1 block w-full border border-gray-600 rounded p-2 bg-gray-700 text-white"
-        :class="{ 'border-red-500': errors.accountName }"
-      />
-      <p v-if="errors.accountName" class="text-red-500 text-sm">
-        {{ errors.accountName }}
-      </p>
+    <form-input
+      label="Назва акаунта"
+      :inputValue="accountName"
+      :validationRules="[required, isName]"
+      @update:inputValue="accountName = $event"
+      @validate="updateValidation('accountName', $event)"
+    />
+    <form-input
+      label="Телефон"
+      :inputValue="phoneNumber"
+      :validationRules="[required, isPhoneNumber]"
+      @update:inputValue="phoneNumber = $event"
+      @validate="updateValidation('phoneNumber', $event)"
+    />
+
+    <form-input
+      label="Назва вебсайту"
+      :inputValue="websiteName"
+      :validationRules="[required, isURL]"
+      @update:inputValue="websiteName = $event"
+      @validate="updateValidation('websiteName', $event)"
+    />
+
+    <div class="flex justify-between items-center">
+      <button
+        type="submit"
+        class="bg-black bg-opacity-50 backdrop-blur-md text-white px-4 py-2 rounded hover:bg-opacity-70 transition duration-200"
+      >
+        Створити акаунт
+      </button>
+
+      <div
+        @click="handleClick"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition duration-200 cursor-pointer"
+      >
+        Перейти до угоди
+      </div>
     </div>
-
-    <div class="mb-4">
-      <label class="block text-gray-300">Номер телефону</label>
-      <input
-        v-model="phoneNumber"
-        type="tel"
-        class="mt-1 block w-full border border-gray-600 rounded p-2 bg-gray-700 text-white"
-        :class="{ 'border-red-500': errors.phoneNumber }"
-      />
-      <p v-if="errors.phoneNumber" class="text-red-500 text-sm">
-        {{ errors.phoneNumber }}
-      </p>
-    </div>
-
-    <div class="mb-4">
-      <label class="block text-gray-300">Назва вебсайту</label>
-      <input
-        v-model="websiteName"
-        type="text"
-        class="mt-1 block w-full border border-gray-600 rounded p-2 bg-gray-700 text-white"
-        :class="{ 'border-red-500': errors.websiteName }"
-      />
-      <p v-if="errors.websiteName" class="text-red-500 text-sm">
-        {{ errors.websiteName }}
-      </p>
-    </div>
-
-    <button
-      type="submit"
-      class="bg-black bg-opacity-50 backdrop-blur-md text-white px-4 py-2 rounded hover:bg-opacity-70 transition duration-200"
-    >
-      Створити акаунт
-    </button>
-
     <p
       v-if="successMessage || failedMessage"
       :class="{
@@ -66,85 +61,91 @@
   </form>
 </template>
 
-<script>
-import { ref } from "vue";
+<script setup>
+import { ref, computed } from "vue";
 import { createAccount } from "../api";
 
-export default {
-  setup(props, { emit }) {
-    const accountName = ref("");
-    const phoneNumber = ref("");
-    const websiteName = ref("");
-    const errors = ref({});
-    const successMessage = ref("");
-    const failedMessage = ref("");
+import FormInput from "./FormInput.vue";
 
-    const validateForm = () => {
-      errors.value = {};
-      let isValid = true;
+const emit = defineEmits(["toggle-form"]);
 
-      if (!accountName.value) {
-        errors.value.accountName = "Ім'я акаунту є обов'язковим.";
-        isValid = false;
-      }
-      const nameRegex = /^[a-zA-Zа-яА-ЯіІїЇєЄґҐ\s\-]+$/u;
-      if (!accountName.value || !nameRegex.test(accountName.value)) {
-        errors.value.accountName =
-          "Ім'я акаунту має містити тільки літери, пробіли та тире.";
-        isValid = false;
-      }
+const accountName = ref("");
+const phoneNumber = ref("");
+const websiteName = ref("");
 
-      const phoneRegex = /^\+?[0-9\s\-]{10,15}$/;
-      if (!phoneNumber.value || !phoneRegex.test(phoneNumber.value)) {
-        errors.value.phoneNumber =
-          "Номер телефону має містити від 10 до 15 цифр.";
-        isValid = false;
-      }
+const successMessage = ref("");
+const failedMessage = ref("");
 
-      if (!websiteName.value) {
-        errors.value.websiteName = "Назва вебсайту є обов'язковою.";
-        isValid = false;
-      }
+const isSubmitting = ref(false);
 
-      return isValid;
-    };
+const handleClick = () => {
+  emit("toggle-form");
+};
 
-    const submitForm = async () => {
-      if (validateForm()) {
-        const data = {
-          Account_Name: accountName.value,
-          Phone: phoneNumber.value,
-          Website: websiteName.value,
-        };
+const validationStatus = ref({
+  accountName: false,
+  phoneNumber: false,
+  websiteName: false,
+});
 
-        const response = await createAccount(data);
+const updateValidation = (field, isValid) => {
+  validationStatus.value[field] = isValid;
+};
+const required = (value) => {
+  return value ? true : "Це поле є обов'язковим.";
+};
+const isPhoneNumber = (value) => {
+  const phonePattern = /^\+?[0-9\s\-]{10,15}$/;
+  return phonePattern.test(value) ? true : "Невірний формат номеру телефону.";
+};
+const isName = (value) => {
+  const namePattern = /^[a-zA-Zа-яА-ЯіІїЇєЄґҐ\s\-]+$/u;
+  return namePattern.test(value)
+    ? true
+    : "Ім'я акаунту має містити тільки літери, пробіли та тире.";
+};
+const isURL = (value) => {
+  const urlPattern = /^(https?:\/\/)?([\w.-]+)\.([a-z]{2,6})([\/\w .-]*)*\/?$/i;
+  return urlPattern.test(value) ? true : "Невірний формат URL.";
+};
 
-        if (response.data[0].code === "SUCCESS") {
-          successMessage.value = "Акаунт успішно створено!";
-        } else if (!response.success) {
-          failedMessage.value = Object.values(response.errors)[0][0];
-        }
-        emit("account-created");
+const isFormValid = computed(() =>
+  Object.values(validationStatus.value).every((status) => status)
+);
 
-        accountName.value = "";
-        phoneNumber.value = "";
-        websiteName.value = "";
-      } else {
-        successMessage.value = "";
-        failedMessage.value = "";
-      }
-    };
+const submitForm = async () => {
+  if (!isFormValid.value) {
+    successMessage.value = "";
+    failedMessage.value = "";
+    return;
+  }
 
-    return {
-      accountName,
-      phoneNumber,
-      websiteName,
-      errors,
-      successMessage,
-      failedMessage,
-      submitForm,
-    };
-  },
+  isSubmitting.value = true;
+
+  const data = {
+    Account_Name: accountName.value,
+    Phone: phoneNumber.value,
+    Website: websiteName.value,
+  };
+
+  try {
+    const response = await createAccount(data);
+
+    if (response.success === false) {
+      failedMessage.value = Object.values(response.errors)[0][0];
+    } else if (response.data[0]?.code === "SUCCESS") {
+      successMessage.value = "Акаунт успішно створено!";
+
+      accountName.value = "";
+      phoneNumber.value = "";
+      websiteName.value = "";
+    }
+  } catch (error) {
+    failedMessage.value = "Сталася помилка під час створення акаунта.";
+    console.error(error);
+  } finally {
+    isSubmitting.value = false;
+  }
 };
 </script>
 

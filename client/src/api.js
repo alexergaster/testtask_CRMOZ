@@ -15,3 +15,13 @@ export const createAccount = async (data) => {
     return errors.response.data;
   }
 };
+
+export const createDeal = async (data) => {
+  try {
+    const result = await api.post("/deal/create", data);
+
+    return result.data;
+  } catch (errors) {
+    return errors.response.data;
+  }
+};
