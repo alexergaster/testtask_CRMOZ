@@ -1,7 +1,7 @@
 <template>
   <form
     @submit.prevent="submitDeal"
-    class="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md"
+    class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md"
     :class="{
       'bg-opacity-50 backdrop-blur-md pointer-events-none': isSubmitting,
     }"
@@ -26,17 +26,17 @@
       @validate="updateValidation('dealStage', $event)"
     />
 
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between flex-col sm:flex-row sm:items-center">
       <button
         type="submit"
-        class="bg-black bg-opacity-50 backdrop-blur-md text-white px-4 py-2 rounded hover:bg-opacity-70 transition duration-200"
+        class="bg-black bg-opacity-50 backdrop-blur-md text-white px-4 py-2 rounded hover:bg-opacity-70 transition duration-200 mb-3 sm:mb-0"
       >
         Створити угоду
       </button>
 
       <div
         @click="handleClick"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500 transition duration-200 cursor-pointer"
+        class="bg-blue-600 text-center text-white px-4 py-2 rounded hover:bg-blue-500 transition duration-200 cursor-pointer"
       >
         Перейти до акаунту
       </div>

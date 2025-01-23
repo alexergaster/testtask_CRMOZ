@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col items-center justify-center min-h-screen bg-gray-900"
+    class="flex flex-col items-center justify-center min-h-screen bg-gray-900 p-1"
   >
     <div class="form-container">
       <transition name="slide-fade" mode="out-in">
